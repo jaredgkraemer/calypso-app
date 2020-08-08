@@ -1,50 +1,74 @@
-import shelve
-import werkzeug
-from flask import Flask, g
-from flask_restful import Resource, Api, reqparse
+import sys, csv, sqlite3, json
+
+from flask import Flask, Response, g, request, jsonify, current_app
+from werkzeug.utils import secure_filename
+import pandas as pd
 
 app = Flask(__name__)
-api = Api(app)
 
 def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = shelve.open("local.db")
-    return db
+    if 'db' not in g:
+        g.db = sqlite3.connect("local.db")
+        g.db.row_factory = sqlite3.Row
 
+    return g.db
 
 @app.teardown_appcontext
 def teardown_db(exception):
-    db = getattr(g, '_database', None)
+    db = g.pop('db', None)
     if db is not None:
         db.close()
 
+@app.route("/records", methods=["GET", "POST"])
+def records():
 
-class Csv(Resource):
-    def get(self):
-        shelf = get_db()
-        keys = list(shelf.keys())
+    db = get_db()
+    curs = db.cursor()
 
-        csv_list = []
+    if request.method == "POST":
 
-        for key in keys:
-            csv_list.append(shelf[key])
+        f = request.files["csvFile"]
+        name = secure_filename(f.filename)
+        path = "/usr/src/app/records/" + name
+        f.save(path)
 
-        return {'message': 'Success', 'data': csv_list}, 200
+        drop_table_query = "DROP TABLE IF EXISTS {0}".format(name[:-4])
+        create_table_query = """
+            CREATE TABLE IF NOT EXISTS {0} (
+                guid text NOT NULL,
+                name text NOT NULL,
+                date text NOT NULL
+            )
+        """.format(name[:-4])
 
-    def post(self):
-        parser = reqparse.RequestParser()
+        curs.execute(drop_table_query)
+        curs.execute(create_table_query)
 
-        parser.add_argument('name', required=True)
-        parser.add_argument('data', type=werkzeug.datastructures.FileStorage, location='files')
+        reader = csv.reader(open(path, "r"), delimiter=",")
 
-        # Parse the arguments into an object
-        args = parser.parse_args()
+        for row in reader:
+            to_db = [str(row[0]), str(row[1]), str(row[2])]
+            insert_query = "INSERT INTO {0} (guid, name, date) VALUES (?, ?, ?);".format(name[:-4])
+            curs.execute(insert_query, to_db)
 
-        shelf = get_db()
-        shelf[args['name']] = args
+        db.commit()
+        curs.close()
 
-        return {'message': 'Saved File', 'name': args['name']}, 201
+        return jsonify({"filename": name[:-4]})
 
+    elif request.method == "GET":
+        get_tables_query = """
+            SELECT name FROM sqlite_master
+            WHERE type='table'
+            ORDER BY name;
+        """
+        curs.execute(get_tables_query)
+        result = [ row[0] for row in curs.fetchall()]
+    
+        print("GET ALL: ", result, file=sys.stderr)
+        curs.close()
+        return Response(json.dumps(result), status=200, mimetype="application/json")
 
-api.add_resource(Csv, '/csv')
+@app.route("/records/<name>", methods=["GET"])
+def getSingleRecord(name):
+    return Response("{'message':'success'}", status=200, mimetype="application/json")

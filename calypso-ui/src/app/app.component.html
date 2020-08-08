@@ -1,6 +1,26 @@
 <h1>Calypso App</h1>
 
-<input type="file" (change)="onFileChange($event)" id="input-file" accept=".csv">
-<button type="button" (click)="onUpload()">Upload</button>
+<input #fileUpload type="file" (change)="onFileChange($event.target.files)" name="csvFile" accept=".csv">
 
-<button type="button" (click)="onGet()">Get List</button>
+<button type="button" (click)="onUpload()">Upload</button>
+<div *ngIf="uploading" class="lds-dual-ring"></div>
+<div *ngIf="errorUploading">Error Uploading</div>
+
+
+<table>
+  <tr>
+    <th>Index</th>
+    <th>Name</th>
+    <th>View</th>
+    <th>Download</th>
+  </tr>
+  <div *ngIf="fetching" class="lds-dual-ring"></div>
+  <tr *ngFor="let file of fileList; index as i">
+    <td>{{i}}</td>
+    <td>{{file}}</td>
+    <td>button</td>
+    <td>button</td>
+  </tr>
+</table>
+
+<div *ngIf="errorFetching">Error Fetching from Database</div>

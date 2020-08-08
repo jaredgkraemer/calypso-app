@@ -1,70 +1,59 @@
-import { Component } from '@angular/core';
-import { Observable } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
-export class AppComponent {
-  title = 'calypso-ui';
-  url = 'http://localhost:5000/csv';
+export class AppComponent implements OnInit {
+  url = 'http://localhost:5000/records';
   currentFile: File = null;
+  fileList: string[] = [];
+  uploading = false;
+  errorUploading = false;
+  fetching = false;
+  errorFetching = false;
 
   constructor(private http: HttpClient) {}
 
-  onFileChange(event) {
-    // let reader = new FileReader();
-    // if (event.target.files && event.target.files.length > 0) {
-    //   let file = event.target.files[0];
-    //   reader.readAsDataURL(file);
-    //   reader.onload = () => {
-    //     console.log("TEST: ", reader.result);
-    //   };
-    // }
-    // }
-    if (event.target.files && event.target.files.length > 0) {
-      this.currentFile = event.target.files[0];
-      console.log('CURR FILE: ', this.currentFile);
+  ngOnInit() {
+    this.getAll();
+  }
+
+  public onFileChange(files: FileList) {
+    if (files && files.length > 0) {
+      this.currentFile = files[0];
     }
   }
 
-  onUpload() {
+  public async onUpload(): Promise<void> {
     if (this.currentFile === null) return;
 
-    console.log('UPLOAD');
+    this.getAll();
+
+    if (this.fileList.includes(this.currentFile.name)) return;
+
+    this.errorUploading = false;
+    this.uploading = true;
+
     let formData: FormData = new FormData();
-
-    formData.append('uploadFile', this.currentFile, this.currentFile.name);
-
-    console.log('FORM DATA: ', formData);
-
-    let headers = new HttpHeaders();
-    headers.set('Content-Type', 'multipart/form-data');
-
-    let options = { headers: headers };
-
-    console.log('HEADERS: ', headers)
-
-    let test = {
-      name: this.currentFile.name,
-      data: this.currentFile
-    }
-
-    this.http.post(this.url, test, options)
-      .subscribe(
-        (data) => console.log('SUCCESS: ', data),
-        (error) => console.log('ERROR: ', error)
-      );
+    formData.append('csvFile', this.currentFile, this.currentFile.name);
+    
+    await this.http.post(this.url, formData)
+      .toPromise()
+      .then((data: any) => this.fileList.push(data.filename))
+      .catch(() => this.errorUploading = true)
+      .finally(() => this.uploading = false);
   }
 
-  onGet() {
-    this.http.get(this.url)
-      .subscribe(
-        (data) => console.log('SUCCESS: ', data),
-        (error) => console.log('ERROR: ', error)
-      );
+  public async getAll(): Promise<void> {
+    this.errorFetching = false;
+    this.fetching = true;
+
+    await this.http.get(this.url).toPromise()
+      .then((data: string[]) => this.fileList = data)
+      .catch(() => this.errorFetching = true)
+      .finally(() => this.fetching = false);
   }
 }
