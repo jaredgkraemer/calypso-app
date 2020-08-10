@@ -1,4 +1,4 @@
-from csv_service import app
+from records_service import app
 from flask_cors import CORS
 
 # allows cross origin requests
