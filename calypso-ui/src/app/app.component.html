@@ -24,7 +24,7 @@
       </tr>
       <div *ngIf="fetching" class="lds-dual-ring"></div>
       <tr *ngFor="let file of fileList; index as i">
-        <td>{{i}}</td>
+        <td>{{i + 1}}</td>
         <td>{{file}}</td>
         <td>
           <button type="button" class="btn btn-primary" (click)="viewRecord(file)">View</button>
@@ -73,7 +73,7 @@
             <th>Street</th>
           </tr>
           <tr *ngFor="let row of viewFile; index as i">
-            <td>{{i}}</td>
+            <td>{{i + 1}}</td>
             <td>{{row[0]}}</td>
             <td>{{row[1]}}</td>
             <td>{{row[2]}}</td>
