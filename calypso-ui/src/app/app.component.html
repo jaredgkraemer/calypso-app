@@ -1,26 +1,93 @@
-<h1>Calypso App</h1>
 
-<input #fileUpload type="file" (change)="onFileChange($event.target.files)" name="csvFile" accept=".csv">
+<div class="container">
+  <h1 class="header">CALYPSO</h1>
+  <h3 class="header">CSV APP</h3>
 
-<button type="button" (click)="onUpload()">Upload</button>
-<div *ngIf="uploading" class="lds-dual-ring"></div>
-<div *ngIf="errorUploading">Error Uploading</div>
+  <div class="upload">
 
+    <input #fileUpload id="fileUpload" type="file" (change)="onFileChange($event.target.files)" name="csvFile" accept=".csv">
+    <button type="button" id="inputGroupFileAddon02" class="btn btn-primary" (click)="onUpload()">Upload</button>
 
-<table>
-  <tr>
-    <th>Index</th>
-    <th>Name</th>
-    <th>View</th>
-    <th>Download</th>
-  </tr>
-  <div *ngIf="fetching" class="lds-dual-ring"></div>
-  <tr *ngFor="let file of fileList; index as i">
-    <td>{{i}}</td>
-    <td>{{file}}</td>
-    <td>button</td>
-    <td>button</td>
-  </tr>
-</table>
+    <div *ngIf="uploading" class="lds-dual-ring"></div>
+    <div *ngIf="errorUploading">Error uploading</div>
+  </div>
 
-<div *ngIf="errorFetching">Error Fetching from Database</div>
+  <div class="main-content">
+    <div class="left">
+      <table class="table">
+      <h4>LIST OF UPLOADED FILES</h4>
+      <tr>
+        <th>Index</th>
+        <th>Name</th>
+        <th>View</th>
+        <th>Download</th>
+      </tr>
+      <div *ngIf="fetching" class="lds-dual-ring"></div>
+      <tr *ngFor="let file of fileList; index as i">
+        <td>{{i}}</td>
+        <td>{{file}}</td>
+        <td>
+          <button type="button" class="btn btn-primary" (click)="viewRecord(file)">View</button>
+        </td>
+        <td>
+          <button type="button" class="btn btn-primary" (click)="onDownload(file)">Download</button>
+        </td>
+      </tr>
+    </table>
+
+    <div *ngIf="errorFetching">Error fetching from database</div>
+    </div>
+
+    <div class="right">
+      <div *ngIf="currentFilename !== 'No File Selected'">
+        <h4>DATE STATS</h4>
+        <p>Top most common years for: {{currentFilename}}</p>
+        <table class="table">
+          <tr>
+            <th>Index</th>
+            <th>Year</th>
+            <th>Frequency</th>
+          </tr>
+          <tr *ngFor="let stat of dateStat; index as i">
+            <td>{{i + 1}}</td>
+            <td>{{stat[0]}}</td>
+            <td>{{stat[1]}}</td>
+          </tr>
+        </table>
+      </div>
+      <div *ngIf="viewFile.length !== 0" class="view-table">
+        <h4>VIEW FILE</h4>
+        <table class="table">
+          <tr>
+            <th>Index</th>
+            <th>GUID</th>
+            <th>Name</th>
+            <th>First</th>
+            <th>Last</th>
+            <th>Email</th>
+            <th>Value</th>
+            <th>Date</th>
+            <th>Phone</th>
+            <th>Age</th>
+            <th>State</th>
+            <th>Street</th>
+          </tr>
+          <tr *ngFor="let row of viewFile; index as i">
+            <td>{{i}}</td>
+            <td>{{row[0]}}</td>
+            <td>{{row[1]}}</td>
+            <td>{{row[2]}}</td>
+            <td>{{row[3]}}</td>
+            <td>{{row[4]}}</td>
+            <td>{{row[5]}}</td>
+            <td>{{row[6]}}</td>
+            <td>{{row[7]}}</td>
+            <td>{{row[9]}}</td>
+            <td>{{row[10]}}</td>
+            <td>{{row[11]}}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
